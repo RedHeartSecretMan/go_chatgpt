@@ -1,0 +1,75 @@
+[20230308 10:10:13 - INFO]: 提问: 用python写一个方便增删查改mysql数据库的程序，加上注释！
+
+[20230308 10:11:20 - INFO]: 回答: # 首先需要导入MySQLdb模块
+import MySQLdb
+
+# 定义连接数据库的函数，其中host为主机名，user为用户名，passwd为密码，db为要连的数据库名
+def conn_db(host,user,passwd,db):
+    conn = MySQLdb.connect(
+                    host=host,
+                    user=user,
+                    passwd=passwd,
+                    db=db,
+                    )
+    cursor = conn.cursor()
+    return conn,cursor
+
+# 定义查询函数，其中table为要查询的表名，cols为要查询的列名，cond为查询条件
+def select(table,cols,cond):
+    conn,cursor = conn_db('localhost','root','xxxxxx','test_db')    # 调用连接数据库函数，注意要填入合适的参数
+    sql = "SELECT %s from %s WHERE %s" %(cols,table,cond)    # 定义sql语句
+    cursor.execute(sql)    # 执行sql
+    result = cursor.fetchall()    # 获取查询结果
+    cursor.close()    # 关闭游标
+    conn.close()    # 关闭连接
+    return result
+
+# 定义插入函数，其中table为要插入的表名，keys为要插入的列名，values为要插入的值
+def insert(table,keys,values):
+    conn,cursor = conn_db('localhost','root','xxxxxx','test_db')
+    sql = "INSERT INTO %s (%s) VALUES (%s)" %(table,keys,values)
+    cursor.execute(sql)
+    cursor.close()
+    conn.commit()    # 提交更改
+    conn.close()
+
+# 定义删除函数，其中table为要删除的表名，cond为删除条件
+def delete(table,cond):
+    conn,cursor = conn_db('localhost','root','xxxxxx','test_db')
+    sql = "DELETE FROM %s where %s" %(table,cond)
+    cursor.execute(sql)
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+# 定义更新函数，其中table为要更新的表名，col_and_vals为要更新的列名和值，cond为更新条件
+def update(table,col_and_vals,cond):
+    conn,cursor = conn_db('localhost','root','xxxxxx','test_db')	
+    update_list = []    # 定义要更新的列的列表
+    for k,v in col_and_vals.items():    # 遍历传入的列和值，将其转化为SQL语句中的格式
+        update_list.append("%s='%s'" %(k,v))
+    update_str = ",".join(update_list)    # 将各个更新的列组合成一条SQL语句
+    sql = "UPDATE %s SET %s WHERE %s" %(table,update_str,cond)
+    cursor.execute(sql)
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+# 测试函数
+def test_db():
+    # 测试查询函数
+    print(select('student','name,age','age<20'))
+    
+    # 测试插入函数
+    insert('student','name,age','Tom,19')
+    
+    # 测试删除函数
+    delete('student','age=18')
+    
+    # 测试更新函数
+    update('student',{'age':20},'name="Tom"')
+
+if __name__ == '__main__':
+    test_db()    # 执行测试函数，可以看到各个函数的使用方法及效果
+
+
