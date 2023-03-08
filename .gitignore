@@ -10,4 +10,4 @@ __pycache__
 **/.DS_Store
 .*.egg-info
 **/.*.egg-info
-.api_key
+.api_key.txt
