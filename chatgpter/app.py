@@ -182,7 +182,7 @@ def main():
     args = get_args()
     os.environ["http_proxy"] = f"http://127.0.0.1:{args.proxy_port}"
     os.environ["https_proxy"] = f"http://127.0.0.1:{args.proxy_port}"
-    
+    print(args.api_key)
     # 后端
     global gpt_model
     gpt_model = CallChatGPT3(api_key=args.api_key,
