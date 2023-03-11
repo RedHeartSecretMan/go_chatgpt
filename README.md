@@ -2,16 +2,25 @@
 
 
 ## Quick start
-***「go_chatgpt」* 是一个快速调用 openai chatgpt api 网页**
+***「go_chatgpt」* 是一个快速调用 openai chatgpt api 的网页**
 
 > ***「go_subtitle」 is a quick call to openai chatgpt api web page***
 
 
 
 ### Setup
-**项目需要运行在包含 *[python3.8.16](https://www.python.org/downloads/release/python-3816/)***
+**项目需要运行在包含 *[python3.8.16](https://www.python.org/downloads/release/python-3816/)* 的环境中**
 
 > ***The project needs runs in an environment containing [python3.8.16](https://www.python.org/downloads/release/python-3816/)***
+
+**建议通过 *[miniconda](https://docs.conda.io/en/latest/miniconda.html)* 安装 *python* 以便管理环境**
+
+> **It is recommended to install python through *[miniconda](https://docs.conda.io/en/latest/miniconda.html)* to manage the environment**
+
+```shell
+# 安装python3.8版本
+conda create -n chatgpt python=3.8 
+```
 
 **你可以通过下面的命令安装最新的版本**
 
