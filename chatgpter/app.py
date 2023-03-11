@@ -164,6 +164,7 @@ def get_args():
                         help="the name of the model provided by openai")
     parser.add_argument("--server_name", "-sn", type=str, default="127.0.0.1")
     parser.add_argument("--server_port", "-sp", type=int, default=7860)
+    parser.add_argument("--proxy_name", "-pn", type=str, default="127.0.0.1")
     parser.add_argument("--proxy_port", "-pp", type=int, default=7890)
     parser.add_argument("--share", "-s", type=bool, default=False)
     parser.add_argument("--debug", "-d", type=bool, default=False)
@@ -180,9 +181,9 @@ def get_args():
 
 def main():
     args = get_args()
-    os.environ["http_proxy"] = f"http://127.0.0.1:{args.proxy_port}"
-    os.environ["https_proxy"] = f"http://127.0.0.1:{args.proxy_port}"
-    print(args.api_key)
+    os.environ["http_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
+    os.environ["https_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
+    print(f"当前使用的许可证：{args.api_key}")
     # 后端
     global gpt_model
     gpt_model = CallChatGPT3(api_key=args.api_key,
