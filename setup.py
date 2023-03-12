@@ -5,7 +5,7 @@ from setuptools import setup, find_namespace_packages
 setup(
     name="go_chatgpt",
     py_modules=["chatgpter"],
-    version="0.0.2",
+    version="0.0.3",
     license="MIT",
     
     python_requires='>=3.8',
@@ -17,7 +17,7 @@ setup(
         )
     ],
     entry_points={
-        'console_scripts': ['go_cahtgpt=chatgpter.app:main'],
+        'console_scripts': ['go_chatgpt=chatgpter.app:main'],
     },
     include_package_data=True,
     
