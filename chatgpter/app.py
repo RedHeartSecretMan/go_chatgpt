@@ -15,7 +15,7 @@ matplotlib.pyplot.switch_backend('Agg')
 def chatbot_interaction_1st(question, messages):
     messages = messages or []
     if question:
-        answer_list, _ = gpt_model(question) 
+        answer_list = gpt_model(question) 
         answer = answer_list[SESSIONINDEX]
     else:
         answer = "很高兴遇见你！我是一个AI语言模型，我能为你提供准确和公正的信息！"
@@ -45,7 +45,7 @@ def reset_session_1st():
 # 二、问答
 def chatbot_interaction_2st(question):
     if question:
-        answer_list, _ = gpt_model(question)
+        answer_list = gpt_model(question)
         answer = answer_list[SESSIONINDEX]
         # TODO: Latex渲染bug的缓解方案
         answer = answer.replace("$\sqrt{}$", "√")
@@ -181,9 +181,10 @@ def get_args():
 
 def main():
     args = get_args()
+    # 代理
     os.environ["http_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
     os.environ["https_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
-    print(f"当前使用的许可证：{args.api_key}")
+    
     # 后端
     global gpt_model
     gpt_model = CallChatGPT3(api_key=args.api_key,
@@ -317,10 +318,10 @@ def main():
                              outputs=[log_text_1st, in_text_3st, in_text_4st])
     
     # 启动
-    web.launch(server_name=args.server_name,
-               server_port=args.server_port,
-               share=args.share,
-               debug=args.debug)
+    web.queue().launch(server_name=args.server_name,
+                       server_port=args.server_port,
+                       share=args.share,
+                       debug=args.debug)
 
 
 if __name__ == "__main__":

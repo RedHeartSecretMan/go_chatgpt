@@ -30,7 +30,8 @@ class CallChatGPT3:
         self.api_key = api_key
         self.model = model
         self.messages = []
-        self.token_num = 0
+        self.token_nums = []
+        self.total_tokens = 0
         self.temperature = temperature
         self.top_p = top_p
         self.n = n 
@@ -81,52 +82,50 @@ class CallChatGPT3:
     
     def reset_messages(self):
         self.messages = []
-        self.token_num = 0
+        self.token_nums = []
+        self.total_tokens = 0
     
-    def count_token(self, content, mode=True):
+    def control_token(self, mode=True): 
         if mode:
-            self.token_num += 2*(len(content)+2)
+            self.total_tokens = self.token_nums[-1].total_tokens
         else:
-            self.token_num -= 2*(len(content)+2)
+            self.total_tokens -= (self.token_nums.pop(0).total_tokens - 2**2)
     
     def __call__(self, prompt):
-        answer_list = []
-        tips = ""
-        if 2*(len(prompt)+2) >= 4000:
-            answer_list = ["内容太长ChatGPT将无法工作"]
-            
-            return answer_list, tips
-        
+        while self.total_tokens >= 4096:
+            if len(self.messages) != 0:
+                for _ in range(2):
+                    self.messages.pop(0)
+                self.control_token(False)
+            else:
+                self.messages = []
+                self.token_nums = []
+                self.total_tokens = 0
+
         self.check_logger()
         self.logs.info(f"提问: {prompt}\n")        
-        self.messages.append({"role": "user", "content": prompt})
-        self.count_token(prompt, True)
-        while self.token_num >= 4000:
-            if len(self.messages) != 0:
-                self.count_token(self.messages.pop(0)["content"], False)
-                tips = ["内容太长ChatGPT将遗忘最初的部分"]
-            else:
-                self.token_num = 0
+          
+        answer_list = []
+        try:
+            self.messages.append({"role": "user", "content": prompt})
+            response = self.openai_gptapi() 
+            self.token_nums.append(response.usage)
+            self.control_token(True)          
+        except openai.error.InvalidRequestError: 
+            answer_list = ["输入内容的编码数超过OpenAI所允许的上限值4096，请精简输入内容！"]
+            
+            return answer_list
         
-        response = self.openai_gptapi()     
-        
-        output_content = {i: response.choices[i].message.content for i in range(self.n)}
-        for num, answer in output_content.items():
+        outputs = {index: response.choices[index].message.content for index in range(self.n)}
+        for index, answer in outputs.items():
             self.messages.append({"role": "assistant", "content": answer})
-            self.count_token(answer, True)
             if self.n > 1:
                 self.check_logger()
-                self.logs.info(f"回答({num+1}): {answer.strip()}\n\n")
+                self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
             else:
                 self.check_logger()
                 self.logs.info(f"回答: {answer.strip()}\n\n")    
             answer_list.append(answer.strip())
-
-        return answer_list, tips
-
-
-if __name__ == "__main__":      
-    model = CallChatGPT3()
-    input_prompt = "你好"
-    model(prompt=input_prompt)
+        
+        return answer_list
     
