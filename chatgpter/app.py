@@ -9,6 +9,8 @@ SEED = 51
 SESSIONNUM = 1
 SESSIONINDEX = 0
 matplotlib.pyplot.switch_backend('Agg')
+matplotlib.pyplot.rcParams['font.family'] = ['SimSong', 'Times New Roman']
+matplotlib.pyplot.rcParams['axes.unicode_minus'] = False
 
 
 # 一、聊天
