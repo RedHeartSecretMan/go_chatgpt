@@ -3,7 +3,8 @@ import random
 import argparse
 import matplotlib
 import gradio as gr
-from .model import CallChatGPT3
+from .model import timestamp, CallChatGPT
+
 
 SEED = 51
 SESSIONNUM = 1
@@ -11,6 +12,18 @@ SESSIONINDEX = 0
 matplotlib.pyplot.switch_backend('Agg')
 matplotlib.pyplot.rcParams['font.family'] = ['SimSong', 'Times New Roman']
 matplotlib.pyplot.rcParams['axes.unicode_minus'] = False
+
+
+def password_generator(seed=51):   
+    random.seed(seed)
+    num_list = list(range(1, 10))
+    random.shuffle(num_list)
+    password = ""
+    for num in num_list:
+        password += str(num)
+    password = str(int(password) // 2)
+
+    return password
 
 
 # 一、聊天
@@ -75,18 +88,6 @@ def reset_session_2st():
 
 
 # 日志 
-def password_generator(seed=51):   
-    random.seed(seed)
-    num_list = list(range(1, 10))
-    random.shuffle(num_list)
-    password = ""
-    for num in num_list:
-        password += str(num)
-    password = str(int(password) // 2)
-
-    return password
-
-
 def load_logs_1st(logs, filename, password):
     if password == password_generator(SEED):
         if not filename:
@@ -161,16 +162,23 @@ def get_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # 核心参数
     parser.add_argument("--api_key", "-ak", type=str, default="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",
-                        help="a license to call the openai api")
-    parser.add_argument("--model", "-m", type=str, default="gpt-3.5-turbo",
-                        help="the name of the model provided by openai")
-    parser.add_argument("--server_name", "-sn", type=str, default="127.0.0.1")
-    parser.add_argument("--server_port", "-sp", type=int, default=7860)
-    parser.add_argument("--proxy_name", "-pn", type=str, default="127.0.0.1")
-    parser.add_argument("--proxy_port", "-pp", type=int, default=7890)
-    parser.add_argument("--share", "-s", type=bool, default=False)
-    parser.add_argument("--debug", "-d", type=bool, default=False)
-
+                        help="license sequence to call the openai api")
+    parser.add_argument("--model", "-m", type=str, default="gpt-3.5-turbo", choices=["gpt-3.5-turbo", "gpt-4"],
+                        help="name of the model interface provided by openai")
+    parser.add_argument("--trend", "-t", type=str, default="general", choices=["general", "poet", "tutor"],
+                        help="set the response bias of the model")
+    parser.add_argument("--server_name", "-sn", type=str, default="127.0.0.1",
+                        help="set the name of the server where the web page will run is usually done on the local machine")
+    parser.add_argument("--server_port", "-sp", type=int, default=7860,
+                        help="set the exposed port of the server running the web page, as long as the current port is not occupied")
+    parser.add_argument("--proxy_name", "-pn", type=str, default="127.0.0.1",
+                        help="set for the traffic proxy server are the same as those for running web pages")
+    parser.add_argument("--proxy_port", "-pp", type=int, default=7890,
+                        help="set the port exposed by the traffic proxy server")
+    parser.add_argument("--share", "-s", type=bool, default=False,
+                        help="if True, will create a public network access url using gradio, but some localhost is not accessible (e.g. Google Colab)")
+    parser.add_argument("--debug", "-d", type=bool, default=False,
+                        help="if True, will blocks the main thread from running and print the errors in output")
     # 可选参数
     parser.add_argument("--temperature", type=int, default=1)
     parser.add_argument("--top_p", type=int, default=1)
@@ -178,25 +186,32 @@ def get_args():
     parser.add_argument("--stream", type=bool, default=False)
     parser.add_argument("--presence_penalty", type=int, default=0)
     parser.add_argument("--frequency_penalty", type=int, default=0)
+    parser.add_argument("--logsdir", type=str, default="./logging")
+    parser.add_argument("--logsname", type=str, default=f"chatgpt_{timestamp}.log")
+    
     return parser.parse_args()
 
 
 def main():
     args = get_args()
+    
     # 代理
     os.environ["http_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
-    os.environ["https_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
+    os.environ["https_proxy"] = f"https://{args.proxy_name}:{args.proxy_port}"
     
     # 后端
     global gpt_model
-    gpt_model = CallChatGPT3(api_key=args.api_key,
-                             model=args.model,
-                             temperature=args.temperature,
-                             top_p=args.top_p,
-                             n=args.n,
-                             stream=args.stream,
-                             presence_penalty=args.presence_penalty,
-                             frequency_penalty=args.frequency_penalty)
+    gpt_model = CallChatGPT(api_key=args.api_key,
+                            model=args.model,
+                            temperature=args.temperature,
+                            top_p=args.top_p,
+                            n=args.n,
+                            stream=args.stream,
+                            presence_penalty=args.presence_penalty,
+                            frequency_penalty=args.frequency_penalty,
+                            logsdir=args.logsdir,
+                            logsname=args.logsname,
+                            trend=args.trend)
 
     # 前端
     with gr.Blocks() as web:
