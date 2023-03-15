@@ -5,10 +5,7 @@ import openai
 import tiktoken
 
 
-def timestamp():
-    ymd_stamp = time.strftime('%Y%m%d', time.localtime())
-    
-    return ymd_stamp
+ymd_stamp = time.strftime('%Y%m%d', time.localtime())
 
 
 # 加载GPT模型
@@ -23,7 +20,7 @@ class CallChatGPT:
                  presence_penalty=0,
                  frequency_penalty=0,
                  logsdir="./logging",
-                 logsname=f"chatgpt_{timestamp}.log",
+                 logsname=f"chatgpt_{ymd_stamp}.log",
                  trend="general",):
         # 模型参数
         self.api_key = api_key

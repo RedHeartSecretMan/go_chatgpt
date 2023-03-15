@@ -3,7 +3,7 @@ import random
 import argparse
 import matplotlib
 import gradio as gr
-from .model import timestamp, CallChatGPT
+from .model import ymd_stamp, CallChatGPT
 
 
 SEED = 51
@@ -187,7 +187,7 @@ def get_args():
     parser.add_argument("--presence_penalty", type=int, default=0)
     parser.add_argument("--frequency_penalty", type=int, default=0)
     parser.add_argument("--logsdir", type=str, default="./logging")
-    parser.add_argument("--logsname", type=str, default=f"chatgpt_{timestamp}.log")
+    parser.add_argument("--logsname", type=str, default=f"chatgpt_{ymd_stamp}.log")
     
     return parser.parse_args()
 
