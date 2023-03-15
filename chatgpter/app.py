@@ -197,7 +197,7 @@ def main():
     
     # 代理
     os.environ["http_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
-    os.environ["https_proxy"] = f"https://{args.proxy_name}:{args.proxy_port}"
+    os.environ["https_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
     
     # 后端
     global gpt_model

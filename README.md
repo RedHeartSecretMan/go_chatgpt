@@ -7,7 +7,6 @@
 > ***「go_subtitle」 is a quick call to openai chatgpt api web page***
 
 
-
 ### Setup
 **项目需要运行在包含 *[python3.8.16](https://www.python.org/downloads/release/python-3816/)* 的环境中**
 
@@ -22,9 +21,9 @@
 conda create -n chatgpt python=3.8 
 ```
 
-**你可以通过下面的命令安装最新的版本**
+**你可以通过下面的命令安装此项目最新的版本**
 
-> ***You can install the latest version using the following command***
+> ***You can install the project latest version using the following command***
 
 ```shell
 # 从PyPI安装
@@ -33,6 +32,10 @@ pip install -U go_chatgpt
 # 从GitHub安装
 pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git
 ```
+
+**你需要创建 *OpenAI* 账号以获取 *api-key***
+> ***You need to create an OpenAI account to get the api-key***
+
 
 ### End
 **项目现在是一个可用的*demo*，计划在*23*年*6*月份左右完善**

@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import openai
+import tiktoken
 
 
 def timestamp():
@@ -38,11 +39,13 @@ class CallChatGPT:
         self.logspath = os.path.join(logsdir, logsname)
         self.logs = self.built_logger()
         # 消息参数
+        self.tokenizer = tiktoken.encoding_for_model(model)
+        self.trend = trend
         self.messages = []
         self.token_nums = []
-        self.token_gaps = 2**2
-        self.total_tokens = 0
-        self.trend = trend
+        self.token_usage = []
+        self.token_gaps = 2**4
+        self.token_current = 0
         self.system_messages()
     
     def openai_gptapi(self): 
@@ -95,82 +98,102 @@ class CallChatGPT:
                     break
         if setflag:
             if self.trend == "general":
-                self.messages.insert(0, {"role": "system", "content": "You are a helpful assistant."})
-                self.total_tokens += (13 + self.token_gaps)
-                self.token_nums.insert(0, (13 + self.token_gaps))
+                prompt = "You are a helpful assistant."
+                self.messages.insert(0, {"role": "system", "content": prompt})
+                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                self.token_usage = {"completion_tokens": 0,
+                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                self.token_nums.insert(0, self.token_usage.copy())
             elif self.trend == "poet":
-                self.messages.insert(0, {"role": "system", "content": "You are ChatGPT, a large language model trained by OpenAI. You can generate poems based on the user's input. You can write poems in different styles and formats, such as haiku, sonnet, free verse, etc. You are creative, expressive, and poetic."})
-                self.total_tokens += (65 + self.token_gaps)
-                self.token_nums.insert(0, (65 + self.token_gaps))
+                prompt = "You are ChatGPT, a large language model trained by OpenAI. You can generate poems based on the user's input. You can write poems in different styles and formats, such as haiku, sonnet, free verse, etc. You are creative, expressive, and poetic."
+                self.messages.insert(0, {"role": "system", "content": prompt})
+                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                self.token_usage = {"completion_tokens": 0,
+                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                self.token_nums.insert(0, self.token_usage.copy())
             elif self.trend == "tutor":
-                self.messages.insert(0, {"role": "system", "content": "You are ChatGPT, a large language model trained by OpenAI. You can follow instructions given by the user. You can perform various tasks such as arithmetic calculations, text manipulation, web search, etc. You are smart, efficient, and reliable."})
-                self.total_tokens += (58 + self.token_gaps)
-                self.token_nums.insert(0, (58 + self.token_gaps))
-            else:
-                pass 
+                prompt = "You are ChatGPT, a large language model trained by OpenAI. You can follow instructions given by the user. You can perform various tasks such as arithmetic calculations, text manipulation, web search, etc. You are smart, efficient, and reliable."
+                self.messages.insert(0, {"role": "system", "content": prompt})
+                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                self.token_usage = {"completion_tokens": 0,
+                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                self.token_nums.insert(0, self.token_usage.copy())
     
-    def control_messages(self, role, content, usage, mode="message"): 
+    def control_messages(self,
+                         role=None,
+                         content=None,
+                         usage=None,
+                         mode=None): 
         if mode == "message":
             if role == "user":
                 self.messages.append({"role": "user", "content": content})
+                self.token_current += (len(self.tokenizer.encode(content)) + self.token_gaps)
             elif role == "assistant":
                 self.messages.append({"role": "assistant", "content": content})
-            else:
-                pass
-        elif mode == "increase":
-            self.token_nums.append(usage)
-            self.total_tokens = self.token_nums[-1].total_tokens
+                self.token_current += (len(self.tokenizer.encode(content)) + self.token_gaps)
         elif mode == "decrease":
             for _ in range(1+self.n):
                 self.messages.pop(1)
-            self.total_tokens -= (self.token_nums.pop(1).total_tokens - self.token_gaps)
-        else:
-            pass
+            self.token_current -= (self.token_nums.pop(1)["total_tokens"] - self.token_gaps)
+        elif mode == "increase":
+            self.token_nums.append({"completion_tokens": usage["completion_tokens"],
+                                    "prompt_tokens": usage["prompt_tokens"] - self.token_usage["total_tokens"], 
+                                    "total_tokens": usage["total_tokens"] - self.token_usage["total_tokens"]})
+            self.token_usage["completion_tokens"] = usage["completion_tokens"]
+            self.token_usage["prompt_tokens"] = usage["prompt_tokens"]
+            self.token_usage["total_tokens"] = usage["total_tokens"]
+            self.token_current = usage["total_tokens"]
         
     def reset_messages(self):
         self.messages = []
         self.token_nums = []
-        self.token_gaps = 2**2
-        self.total_tokens = 0
+        self.token_usage = []
+        self.token_gaps = 2**4
+        self.token_current = 0
+        self.system_messages()
     
     
     def __call__(self, prompt):
-        print(1, self.total_tokens)
-        while self.total_tokens >= 4096:
+        self.control_messages(role="user", content=prompt, mode="message")
+        while self.token_current >= 4096:
             if len(self.messages) >= (1+1+self.n):
                 self.control_messages(mode="decrease")
             else:
+                answer_list = ["输入过长，请精简输入！"]
                 self.reset_messages()
-                self.system_messages()
-        print(2, self.total_tokens)
+                
+                return answer_list
+        
         self.check_logger()
         self.logs.info(f"提问: {prompt}\n")        
           
         answer_list = []
-        
         try:
-            self.control_messages(role="user", content=prompt)
-            response = self.openai_gptapi() 
-            self.control_messages(usage=response.usage, mode="increase")  
-            print(3, self.total_tokens)        
-        except openai.error.InvalidRequestError: 
-            answer_list = ["请求无效，请重新开始！"]
+            response = self.openai_gptapi()  
+            answer_dict = {index: response.choices[index].message.content for index in range(self.n)}
+            for index, answer in answer_dict.items():
+                self.control_messages(role="assistant", content=answer, mode="message")            
+                if self.n > 1:
+                    self.check_logger()
+                    self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
+                else:
+                    self.check_logger()
+                    self.logs.info(f"回答: {answer.strip()}\n\n")    
+                answer_list.append(answer.strip())            
+            self.control_messages(usage=response.usage, mode="increase")             
+        except openai.error.RateLimitError:
+            answer_list = ["延迟较大，请稍后重试！"]
             self.reset_messages()
-            self.system_messages()
+            
+            return answer_list
+        except openai.error.InvalidRequestError: 
+            answer_list = ["请求无效，将重新启动！"]
+            self.reset_messages()
 
             return answer_list
-        
-        answer_dict = {index: response.choices[index].message.content for index in range(self.n)}
-        
-        for index, answer in answer_dict.items():
-            self.control_messages(role="assistant", content=answer)
-            if self.n > 1:
-                self.check_logger()
-                self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
-            else:
-                self.check_logger()
-                self.logs.info(f"回答: {answer.strip()}\n\n")    
-            answer_list.append(answer.strip())
         
         return answer_list
     
