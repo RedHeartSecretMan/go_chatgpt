@@ -6,8 +6,9 @@ import tiktoken
 
 
 def timestamp():
+    ymd_stamp = time.strftime('%Y%m%d', time.localtime())
     
-    return time.strftime('%Y%m%d', time.localtime())
+    return ymd_stamp
 
 
 # 加载GPT模型
