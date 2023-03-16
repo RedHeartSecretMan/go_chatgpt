@@ -38,6 +38,9 @@ pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git
 
 
 ### End
+**项目中的*deploy*是*Linux、macOS*和*Windows*平台上的快速部署脚本**
+> ***The deploy in the project is a rapid deployment script for the Linux, macOS and Windows platforms***
+
 **项目现在是一个可用的*demo*，计划在*23*年*6*月份左右完善**
 
 > ***The project is now an available demo, which is planned to be completed around June in 23***
