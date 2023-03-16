@@ -37,7 +37,10 @@ class CallChatGPT:
         self.logspath = os.path.join(logsdir, logsname)
         self.logs = self.built_logger()
         # 消息参数
-        self.tokenizer = tiktoken.encoding_for_model(model)
+        try:
+            self.tokenizer = tiktoken.encoding_for_model(model)
+        except KeyError:
+            self.tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
         self.trend = trend
         self.messages = []
         self.token_nums = []

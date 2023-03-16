@@ -2,9 +2,9 @@
 
 
 ## Quick start
-***「go_chatgpt」* 是一个快速调用 openai chatgpt api 的网页**
+***「go_chatgpt」* 是一个快速调用 openai chatgpt api 的网页封装**
 
-> ***「go_subtitle」 is a quick call to openai chatgpt api web page***
+> ***「go_subtitle」 is a quick call to openai chatgpt api web page encapsulation***
 
 
 ### Setup
@@ -33,8 +33,8 @@ pip install -U go_chatgpt
 pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git
 ```
 
-**你需要创建 *OpenAI* 账号以获取 *api-key***
-> ***You need to create an OpenAI account to get the api-key***
+**你需要创建 *OpenAI* 账号获取 *api-key* 以使用**
+> ***You need to create an OpenAI account to get the api-key to use***
 
 
 ### End
