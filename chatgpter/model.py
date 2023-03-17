@@ -8,6 +8,16 @@ import tiktoken
 ymd_stamp = time.strftime('%Y%m%d', time.localtime())
 
 
+def local_api_key():
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
+        with open(f"{base_dir}/api_key.txt", "r") as f:
+            api_key = f.read().split("\n")
+            return api_key[0]
+    except FileNotFoundError:
+        return None
+
+
 # 加载GPT模型
 class CallChatGPT:
     def __init__(self,
@@ -26,6 +36,8 @@ class CallChatGPT:
                  trend="general",):
         # 模型参数
         self.api_key = api_key
+        if local_api_key():
+            self.api_key = local_api_key()
         self.model = model
         self.temperature = temperature
         self.top_p = top_p
