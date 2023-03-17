@@ -19,6 +19,8 @@ class CallChatGPT:
                  stream=False,
                  presence_penalty=0,
                  frequency_penalty=0,
+                 proxy_name="127.0.0.1",
+                 proxy_port=7890,
                  logsdir="./logging",
                  logsname=f"chatgpt_{ymd_stamp}.log",
                  trend="general",):
@@ -31,6 +33,8 @@ class CallChatGPT:
         self.stream = stream
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
+        self.proxy_name=proxy_name
+        self.proxy_port=proxy_port
         # 日志参数
         self.logsdir = logsdir
         self.logsname = logsname
@@ -50,7 +54,9 @@ class CallChatGPT:
         self.system_messages()
     
     def openai_gptapi(self): 
-        openai.api_key = self.api_key    
+        openai.api_key = self.api_key
+        openai.api_base = "https://api.openai.com/v1/"
+        openai.requests.proxy = f"http://{self.proxy_name}:{self.proxy_port}"    
         response = openai.ChatCompletion.create(model=self.model,
                                                 messages=self.messages,
                                                 temperature=self.temperature,

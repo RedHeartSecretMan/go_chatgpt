@@ -193,11 +193,8 @@ def get_args():
 
 
 def main():
+    # 参数
     args = get_args()
-    
-    # 代理
-    os.environ["http_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
-    os.environ["https_proxy"] = f"http://{args.proxy_name}:{args.proxy_port}"
     
     # 后端
     global gpt_model
@@ -211,7 +208,9 @@ def main():
                             frequency_penalty=args.frequency_penalty,
                             logsdir=args.logsdir,
                             logsname=args.logsname,
-                            trend=args.trend)
+                            trend=args.trend,
+                            proxy_name=args.proxy_name,
+                            proxy_port=args.proxy_port,)
 
     # 前端
     with gr.Blocks() as web:
