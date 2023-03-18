@@ -165,8 +165,10 @@ def get_args():
                         help="license sequence to call the openai api")
     parser.add_argument("--model", "-m", type=str, default="gpt-3.5-turbo", choices=["gpt-3.5-turbo", "gpt-4"],
                         help="name of the model interface provided by openai")
-    parser.add_argument("--trend", "-t", type=str, default="general", choices=["general", "poet", "tutor"],
+    parser.add_argument("--model_trend", "-mt", type=str, default="general", choices=["general", "poet", "tutor"],
                         help="set the response bias of the model")
+    parser.add_argument("--request_method", "-rm", type=str, default="post", choices=["official", "post"],
+                        help="set the method to request access to the api")
     parser.add_argument("--server_name", "-sn", type=str, default="127.0.0.1",
                         help="set the name of the server where the web page will run is usually done on the local machine")
     parser.add_argument("--server_port", "-sp", type=int, default=7860,
@@ -206,11 +208,12 @@ def main():
                             stream=args.stream,
                             presence_penalty=args.presence_penalty,
                             frequency_penalty=args.frequency_penalty,
+                            proxy_name=args.proxy_name,
+                            proxy_port=args.proxy_port,
                             logsdir=args.logsdir,
                             logsname=args.logsname,
-                            trend=args.trend,
-                            proxy_name=args.proxy_name,
-                            proxy_port=args.proxy_port,)
+                            model_trend=args.model_trend,
+                            request_method=args.request_method,)
 
     # 前端
     with gr.Blocks() as web:

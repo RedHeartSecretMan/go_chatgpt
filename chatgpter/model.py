@@ -1,7 +1,9 @@
 import os
 import time
+import json
 import logging
 import openai
+import requests
 import tiktoken
 
 
@@ -33,7 +35,8 @@ class CallChatGPT:
                  proxy_port=7890,
                  logsdir="./logging",
                  logsname=f"chatgpt_{ymd_stamp}.log",
-                 trend="general",):
+                 model_trend="general",
+                 request_method="post",):
         # 模型参数
         self.api_key = api_key
         if local_api_key():
@@ -56,19 +59,18 @@ class CallChatGPT:
         try:
             self.tokenizer = tiktoken.encoding_for_model(model)
         except KeyError:
-            self.tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
-        self.trend = trend
+            self.tokenizer = tiktoken.get_encoding("cl100k_base")
+        self.model_trend = model_trend
+        self.request_method = request_method
         self.messages = []
         self.token_nums = []
         self.token_usage = []
-        self.token_gaps = 2**4
+        self.token_gaps = 2**2
         self.token_current = 0
         self.system_messages()
     
-    def openai_gptapi(self): 
+    def openai_gptapi_1st(self): 
         openai.api_key = self.api_key
-        openai.api_base = "https://api.openai.com/v1/"
-        openai.requests.proxy = f"http://{self.proxy_name}:{self.proxy_port}"    
         response = openai.ChatCompletion.create(model=self.model,
                                                 messages=self.messages,
                                                 temperature=self.temperature,
@@ -77,6 +79,40 @@ class CallChatGPT:
                                                 stream=self.stream,
                                                 presence_penalty=self.presence_penalty,
                                                 frequency_penalty=self.frequency_penalty)
+        
+        return response
+    
+    def openai_gptapi_2st(self):
+        payload = {
+            "model": self.model,
+            "messages": self.messages,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "n": self.n,
+            "stream": self.stream,
+            "presence_penalty": self.presence_penalty,
+            "frequency_penalty": self.frequency_penalty,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        proxies = {
+            "http": f"http://127.0.0.1:{7890}",
+            "https": f"http://127.0.0.1:{7890}"
+        }
+        if self.stream:
+            timeout = 30
+        else:
+            timeout = 200
+        api_url = "https://api.openai.com/v1/chat/completions"
+        response = requests.post(api_url,
+                                 json=payload,
+                                 headers=headers,
+                                 timeout=timeout,
+                                 proxies=proxies,
+                                 stream=True,)
+        response = json.loads(response.text)
         
         return response    
     
@@ -116,29 +152,32 @@ class CallChatGPT:
                     setflag = False
                     break
         if setflag:
-            if self.trend == "general":
+            if self.model_trend == "general":
                 prompt = "You are a helpful assistant."
                 self.messages.insert(0, {"role": "system", "content": prompt})
-                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                message = "".join([f"role: {msg['role']}, content: {msg['content']}" for msg in [self.messages[-1]]])
+                self.token_current += (len(self.tokenizer.encode(message)) + self.token_gaps)
                 self.token_usage = {"completion_tokens": 0,
-                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
-                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                                    "prompt_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps)}
                 self.token_nums.insert(0, self.token_usage.copy())
-            elif self.trend == "poet":
+            elif self.model_trend == "poet":
                 prompt = "You are ChatGPT, a large language model trained by OpenAI. You can generate poems based on the user's input. You can write poems in different styles and formats, such as haiku, sonnet, free verse, etc. You are creative, expressive, and poetic."
                 self.messages.insert(0, {"role": "system", "content": prompt})
-                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                message = "".join([f"role: {msg['role']}, content: {msg['content']}" for msg in [self.messages[-1]]])
+                self.token_current += (len(self.tokenizer.encode(message)) + self.token_gaps)
                 self.token_usage = {"completion_tokens": 0,
-                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
-                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                                    "prompt_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps)}
                 self.token_nums.insert(0, self.token_usage.copy())
-            elif self.trend == "tutor":
+            elif self.model_trend == "tutor":
                 prompt = "You are ChatGPT, a large language model trained by OpenAI. You can follow instructions given by the user. You can perform various tasks such as arithmetic calculations, text manipulation, web search, etc. You are smart, efficient, and reliable."
                 self.messages.insert(0, {"role": "system", "content": prompt})
-                self.token_current += (len(self.tokenizer.encode(prompt)) + self.token_gaps)
+                message = "".join([f"role: {msg['role']}, content: {msg['content']}" for msg in [self.messages[-1]]])
+                self.token_current += (len(self.tokenizer.encode(message)) + self.token_gaps)
                 self.token_usage = {"completion_tokens": 0,
-                                    "prompt_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps), 
-                                    "total_tokens": (len(self.tokenizer.encode(prompt)) + self.token_gaps)}
+                                    "prompt_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps), 
+                                    "total_tokens": (len(self.tokenizer.encode(message)) + self.token_gaps)}
                 self.token_nums.insert(0, self.token_usage.copy())
     
     def control_messages(self,
@@ -149,10 +188,12 @@ class CallChatGPT:
         if mode == "message":
             if role == "user":
                 self.messages.append({"role": "user", "content": content})
-                self.token_current += (len(self.tokenizer.encode(content)) + self.token_gaps)
+                message = "".join([f"role: {msg['role']}, content: {msg['content']}" for msg in [self.messages[-1]]])
+                self.token_current += (len(self.tokenizer.encode(message)) + self.token_gaps)
             elif role == "assistant":
                 self.messages.append({"role": "assistant", "content": content})
-                self.token_current += (len(self.tokenizer.encode(content)) + self.token_gaps)
+                message = "".join([f"role: {msg['role']}, content: {msg['content']}" for msg in [self.messages[-1]]])
+                self.token_current += (len(self.tokenizer.encode(message)) + self.token_gaps)
         elif mode == "decrease":
             for _ in range(1+self.n):
                 self.messages.pop(1)
@@ -170,7 +211,7 @@ class CallChatGPT:
         self.messages = []
         self.token_nums = []
         self.token_usage = []
-        self.token_gaps = 2**4
+        self.token_gaps = 2**2
         self.token_current = 0
         self.system_messages()
     
@@ -190,29 +231,54 @@ class CallChatGPT:
         self.logs.info(f"提问: {prompt}\n")        
           
         answer_list = []
-        try:
-            response = self.openai_gptapi()  
-            answer_dict = {index: response.choices[index].message.content for index in range(self.n)}
-            for index, answer in answer_dict.items():
-                self.control_messages(role="assistant", content=answer, mode="message")            
-                if self.n > 1:
-                    self.check_logger()
-                    self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
-                else:
-                    self.check_logger()
-                    self.logs.info(f"回答: {answer.strip()}\n\n")    
-                answer_list.append(answer.strip())            
-            self.control_messages(usage=response.usage, mode="increase")             
-        except openai.error.RateLimitError:
-            answer_list = ["延迟较大，请稍后重试！"]
-            self.reset_messages()
-            
-            return answer_list
-        except openai.error.InvalidRequestError: 
-            answer_list = ["请求无效，将重新启动！"]
-            self.reset_messages()
+        if self.request_method == "official":
+            try:
+                response = self.openai_gptapi_1st()  
+                answer_dict = {index: response.choices[index].message.content for index in range(self.n)}
+                for index, answer in answer_dict.items():
+                    self.control_messages(role="assistant", content=answer, mode="message")            
+                    if self.n > 1:
+                        self.check_logger()
+                        self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
+                    else:
+                        self.check_logger()
+                        self.logs.info(f"回答: {answer.strip()}\n\n")    
+                    answer_list.append(answer.strip())            
+                self.control_messages(usage=response.usage, mode="increase")             
+            except openai.error.RateLimitError:
+                answer_list = ["延迟较大，请稍后重试！"]
+                self.reset_messages()
+                
+                return answer_list
+            except openai.error.InvalidRequestError: 
+                answer_list = ["请求无效，将重新启动！"]
+                self.reset_messages()
 
             return answer_list
+        elif self.request_method == "post":
+            try:
+                response = self.openai_gptapi_2st()
+                answer_dict = {index: response["choices"][index]["message"]["content"] for index in range(self.n)}
+                for index, answer in answer_dict.items():
+                    self.control_messages(role="assistant", content=answer, mode="message")            
+                    if self.n > 1:
+                        self.check_logger()
+                        self.logs.info(f"回答({index+1}): {answer.strip()}\n\n")
+                    else:
+                        self.check_logger()
+                        self.logs.info(f"回答: {answer.strip()}\n\n")    
+                    answer_list.append(answer.strip())            
+                self.control_messages(usage=response["usage"], mode="increase")             
+            except requests.exceptions.ReadTimeout:
+                answer_list = ["延迟较大，请稍后重试！"]
+                self.reset_messages()
+                
+                return answer_list
+            except requests.exceptions.ConnectTimeout: 
+                answer_list = ["请求无效，将重新启动！"]
+                self.reset_messages()
+
+                return answer_list
         
         return answer_list
     
