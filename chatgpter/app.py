@@ -218,7 +218,7 @@ def main():
     # 前端
     with gr.Blocks() as web:
         with gr.Box():
-            gr.Markdown("<center><h1>OpenAI</h1><h5>Welcome To Play - Code By HaoDaXia</h5></center>") 
+            gr.Markdown("<center><h1>OpenAI GPT</h1><h5>Welcome To Play - Code By HaoDaXia</h5></center>") 
             """控件显示"""
             # 一、聊天
             with gr.Tab(label="聊天", id=0):
