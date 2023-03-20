@@ -284,6 +284,6 @@ class CallChatGPT:
                 self.reset_messages()
 
                 return answer_list
-        
+        print(self.api_key)
         return answer_list
     

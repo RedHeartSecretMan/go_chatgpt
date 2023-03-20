@@ -1,8 +1,11 @@
 import os
+import json
 import socket
 import random
+import requests
 import argparse
 import matplotlib
+import mdtex2html
 import gradio as gr
 from .model import ymd_stamp, CallChatGPT
 
@@ -38,6 +41,66 @@ def password_generator(seed=51):
     password = str(int(password) // 2)
 
     return password
+
+
+def check_api_key(text):   
+    url = 'https://api.openai.com/dashboard/billing/credit_grants'
+    api_key = text
+    headers = {
+        "Authorization": "Bearer " + api_key,
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    response = json.loads(response.text)
+    if response.get("error"):
+        text = f"密钥 {api_key} 无效"
+    else:
+        gpt_model.api_key = api_key
+        text = f"使用密钥 {api_key}，剩余额度 {response['total_available']} 美元！"
+
+    return text
+
+
+def postprocess(self, messages):
+    def parse(text):
+        lines = text.split("\n")
+        lines = [line for line in lines if line != ""]
+        count = 0
+        for i, line in enumerate(lines):
+            if "```" in line:
+                count += 1
+                items = line.split('`')
+                if count % 2 == 1:
+                    lines[i] = f'<pre><code class="language-{items[-1]}">'
+                else:
+                    lines[i] = f'<br></code></pre>'
+            else:
+                if i > 0:
+                    if count % 2 == 1:
+                        line = line.replace("`", "\`")
+                        line = line.replace("<", "&lt;")
+                        line = line.replace(">", "&gt;")
+                        line = line.replace(" ", "&nbsp;")
+                        line = line.replace("*", "&ast;")
+                        line = line.replace("_", "&lowbar;")
+                        line = line.replace("-", "&#45;")
+                        line = line.replace(".", "&#46;")
+                        line = line.replace("!", "&#33;")
+                        line = line.replace("(", "&#40;")
+                        line = line.replace(")", "&#41;")
+                        line = line.replace("$", "&#36;")
+                    lines[i] = "<br>"+line
+        text = "".join(lines)
+        return text
+
+    if messages is None:
+        return []
+    for i, (question, answer) in enumerate(messages):
+        messages[i] = (None if question is None else parse(question),
+                        None if answer is None else mdtex2html.convert(parse(answer)),)  
+    processed_messages = messages 
+    
+    return processed_messages
 
 
 # 一、聊天
@@ -230,54 +293,44 @@ def main():
                             request_method=args.request_method,)
 
     # 前端
-    with gr.Blocks() as web:
+    with gr.Blocks(title="GoChatGPT") as web:
         with gr.Box():
-            gr.Markdown("<center><h1>OpenAI GPT</h1><h5>Welcome To Play - Code By HaoDaXia</h5></center>") 
             """控件显示"""
             # 一、聊天
-            with gr.Tab(label="聊天", id=0):
+            with gr.Tab(label="聊天", id=0):    
+                gr.Chatbot.postprocess = postprocess
                 init_state = gr.State()   
                 with gr.Column():   
-                    with gr.Accordion(label="Bot"):         
-                        out_text_1st = gr.Chatbot(show_label=False)
-                    in_text_1st = gr.Textbox(label="输入",
-                                                show_label=False,
-                                                lines=5,
-                                                max_lines=10,
-                                                placeholder="请输入文字！")
-                    with gr.Box():
-                        with gr.Column():
-                            start_btn_1st = gr.Button("开始") 
-                            with gr.Accordion(label="More", open=False): 
-                                with gr.Row():
-                                    clear_btn_1st = gr.Button("清空")
-                                    reset_btn_1st = gr.Button("重启")    
-                    gr.Examples(["你好！"],
-                                [in_text_1st],)  
+                    out_text_1st = gr.Chatbot(label="Bot").style(height=450)
+                    with gr.Row(variant="default").style(equal_height=True):
+                        with gr.Column(scale=10, variant="panel"):
+                            in_text_1st = gr.Textbox(label="输入",
+                                                     show_label=False,
+                                                     lines=7,
+                                                     max_lines=7,
+                                                     placeholder="请输入文字！").style(container=False)
+                        with gr.Column(min_width=50, scale=1, variant="panel"):
+                            start_btn_1st = gr.Button("开始", variant="primary") 
+                            clear_btn_1st = gr.Button("清空", variant="secondary")
+                            reset_btn_1st = gr.Button("重启", variant="secondary")
                                     
                                 
             # 二、问答
             with gr.Tab(label="问答", id=1):
-                with gr.Column():
-                    with gr.Accordion(label="Bot"):
-                        with gr.Box():
-                            out_text_2st = gr.Markdown("<br>")
-                    in_text_2st = gr.Textbox(label="输入",
-                                            show_label=False,
-                                            lines=5,
-                                            max_lines=10,
-                                            placeholder="请输入问题！")                   
-                    with gr.Box():
-                        with gr.Column():
-                            ask_btn_1st = gr.Button("提问")
-                            with gr.Accordion(label="More", open=False):
-                                with gr.Row():
-                                    clear_btn_2st = gr.Button("清空")
-                                    reset_btn_2st = gr.Button("重启")                 
-                    gr.Examples(["什么是人工智能？"],
-                                [in_text_2st],)    
+                with gr.Row(variant="default").style(equal_height=True):
+                    with gr.Column(scale=2, variant="panel"):
+                        out_text_2st = gr.Code(language="markdown", label="Bot")
+                    with gr.Column(scale=1, variant="panel"):
+                        in_text_2st = gr.Textbox(label="输入",
+                                                    show_label=False,
+                                                    lines=15,
+                                                    max_lines=15,
+                                                    placeholder="请输入问题！").style(container=False)                   
+                        ask_btn_1st = gr.Button("提问", variant="primary")
+                        clear_btn_2st = gr.Button("清空", variant="secondary")
+                        reset_btn_2st = gr.Button("重启", variant="secondary")                 
 
-                                        
+                          
             # TODO: 20230305 -> 写完论文: 增加语音对话特性与增加绘图特性
             # 三、对话       
             with gr.Tab(label="对话", id=2):        
@@ -293,16 +346,18 @@ def main():
                     with gr.Accordion(label="Log"):      
                         with gr.Box():
                             log_text_1st = gr.Markdown("<br>")
-                    in_text_3st = gr.Textbox(label="输入",
-                                            show_label=False,
-                                            lines=1,
-                                            max_lines=1,
-                                            placeholder="请输入名称！")
-                    in_text_4st = gr.Textbox(label="输入",
-                                            show_label=False,
-                                            lines=1,
-                                            max_lines=1,
-                                            placeholder="请输入密码！")
+                    with gr.Box():
+                        in_text_3st = gr.Textbox(label="输入",
+                                                show_label=False,
+                                                lines=1,
+                                                max_lines=1,
+                                                placeholder="请输入名称！").style(container=False)
+                    with gr.Box():
+                        in_text_4st = gr.Textbox(label="输入",
+                                                show_label=False,
+                                                lines=1,
+                                                max_lines=1,
+                                                placeholder="请输入密码！").style(container=False)
                     with gr.Box():
                         with gr.Column():
                             load_btn_1st = gr.Button("导入")
@@ -311,13 +366,35 @@ def main():
                                     clear_btn_3st = gr.Button("清空")
                                     detele_btn_1st = gr.Button("删除")
                                     reset_btn_3st = gr.Button("重启")
+            
+            
+            # 密钥
+            with gr.Box():
+                with gr.Accordion(label="Key", open=False): 
+                    api_key_text = gr.Textbox(value=check_api_key(args.api_key),
+                                            label="Key",
+                                            show_label=False,
+                                            interactive=True,
+                                            placeholder=f"请输入密钥！",).style(container=False) 
+        
+                    
+        # 署名
+        gr.Markdown("<center><h3>Welcome To Play - Code By HaoDaXia</h3></center>")
         
         
         """控件行为"""
+        # 零、密钥
+        api_key_text.submit(check_api_key, inputs=[api_key_text], outputs=[api_key_text])
+        
         # 一、对话
+        in_text_1st.submit(chatbot_interaction_1st,
+                           inputs=[in_text_1st, init_state],
+                           outputs=[out_text_1st, init_state, in_text_1st],
+                           show_progress=True)
         start_btn_1st.click(chatbot_interaction_1st,
                             inputs=[in_text_1st, init_state],
-                            outputs=[out_text_1st, init_state, in_text_1st])
+                            outputs=[out_text_1st, init_state, in_text_1st],
+                            show_progress=True)
         clear_btn_1st.click(clear_text_1st,
                             inputs=[],
                             outputs=[out_text_1st, init_state, in_text_1st])
@@ -326,9 +403,14 @@ def main():
                             outputs=[out_text_1st, init_state, in_text_1st])
         
         # 二、问答
+        in_text_2st.submit(chatbot_interaction_2st,
+                           inputs=[in_text_2st],
+                           outputs=[out_text_2st, in_text_2st],
+                           show_progress=True)
         ask_btn_1st.click(chatbot_interaction_2st,
-                            inputs=[in_text_2st],
-                            outputs=[out_text_2st, in_text_2st])
+                          inputs=[in_text_2st],
+                          outputs=[out_text_2st, in_text_2st],
+                          show_progress=True)
         clear_btn_2st.click(clear_text_2st,
                             inputs=[],
                             outputs=[out_text_2st, in_text_2st])

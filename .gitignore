@@ -8,7 +8,7 @@ __pycache__
 **/__pycache__
 .DS_Store
 **/.DS_Store
-.*.egg-info
+*.egg-info
 **/*.egg-info
 api_key.txt
 **/logging
