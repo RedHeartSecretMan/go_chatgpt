@@ -35,6 +35,9 @@ pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git
 **你需要创建 *OpenAI* 账号获取 *api-key* 以使用**
 > ***You need to create an OpenAI account to get the api-key to use***
 
+**项目中的 *deploy* 文件夹包含了在 *Linux、macOS* 和 *Windows* 平台上的快速部署脚本**
+> ***The deploy folder in the project contains rapid deployment script for the Linux, macOS and Windows platforms***
+
 ### Docker
 **你可以通过以下命令获取 *docker* 镜像**
 > ***You can obtain the docker image with the following command***
@@ -57,9 +60,6 @@ docker run -e api_key="write_yourself_api_key_from_openai.com" -e proxy_name="19
 > **Tips: 其中 *192.168.1.7* 是局域网中网关分配给宿主机的 *IP* 地址，*7890* 是宿主机被代理的端口，根据实际情况设置**
 
 ### End
-**项目中的 *deploy* 是 *Linux、macOS* 和 *Windows* 平台上的快速部署脚本**
-> ***The deploy in the project is a rapid deployment script for the Linux, macOS and Windows platforms***
-
 **项目现在是一个可用的*demo*，计划在*23*年*6*月份左右完善**
 
 > ***The project is now an available demo, which is planned to be completed around June in 23***
