@@ -36,7 +36,7 @@ class CallChatGPT:
                  logsdir="./logging",
                  logsname=f"chatgpt_{ymd_stamp}.log",
                  model_trend="general",
-                 request_method="post",):
+                 request_method="official",):
         # 模型参数
         self.api_key = api_key
         if local_api_key():
@@ -98,8 +98,8 @@ class CallChatGPT:
             "Authorization": f"Bearer {self.api_key}"
         }
         proxies = {
-            "http": f"http://127.0.0.1:{7890}",
-            "https": f"http://127.0.0.1:{7890}"
+            "http": f"http://{self.proxy_name}:{self.proxy_port}",
+            "https": f"http://{self.proxy_name}:{self.proxy_port}"
         }
         if self.stream:
             timeout = 30
@@ -111,7 +111,7 @@ class CallChatGPT:
                                  headers=headers,
                                  timeout=timeout,
                                  proxies=proxies,
-                                 stream=True,)
+                                 stream=True)
         response = json.loads(response.text)
         
         return response    
@@ -275,7 +275,12 @@ class CallChatGPT:
                 
                 return answer_list
             except requests.exceptions.ConnectTimeout: 
-                answer_list = ["请求无效，将重新启动！"]
+                answer_list = ["请求无效，请稍后重试！"]
+                self.reset_messages()
+
+                return answer_list     
+            except requests.exceptions.SSLError:
+                answer_list = ["请求无效，请稍后重试！"]
                 self.reset_messages()
 
                 return answer_list

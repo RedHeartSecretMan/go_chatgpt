@@ -1,4 +1,5 @@
 import os
+import socket
 import random
 import argparse
 import matplotlib
@@ -12,6 +13,19 @@ SESSIONINDEX = 0
 matplotlib.pyplot.switch_backend('Agg')
 matplotlib.pyplot.rcParams['font.family'] = ['SimSong', 'Times New Roman']
 matplotlib.pyplot.rcParams['axes.unicode_minus'] = False
+
+
+def str2bool(string):
+    str2val = {"True": True, "False": False}
+    if string in str2val:
+        return str2val[string]
+    else:
+        raise ValueError(f"Expected one of {set(str2val.keys())}, got {string}")
+
+
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
 
 
 def password_generator(seed=51):   
@@ -177,15 +191,15 @@ def get_args():
                         help="set for the traffic proxy server are the same as those for running web pages")
     parser.add_argument("--proxy_port", "-pp", type=int, default=7890,
                         help="set the port exposed by the traffic proxy server")
-    parser.add_argument("--share", "-s", type=bool, default=False,
+    parser.add_argument("--share", "-s", type=str2bool, default=False,
                         help="if True, will create a public network access url using gradio, but some localhost is not accessible (e.g. Google Colab)")
-    parser.add_argument("--debug", "-d", type=bool, default=False,
+    parser.add_argument("--debug", "-d", type=str2bool, default=False,
                         help="if True, will blocks the main thread from running and print the errors in output")
     # 可选参数
     parser.add_argument("--temperature", type=int, default=1)
     parser.add_argument("--top_p", type=int, default=1)
     parser.add_argument("--n", type=int, default=SESSIONNUM)
-    parser.add_argument("--stream", type=bool, default=False)
+    parser.add_argument("--stream", type=str2bool, default=False)
     parser.add_argument("--presence_penalty", type=int, default=0)
     parser.add_argument("--frequency_penalty", type=int, default=0)
     parser.add_argument("--logsdir", type=str, default="./logging")
@@ -337,6 +351,8 @@ def main():
                              outputs=[log_text_1st, in_text_3st, in_text_4st])
     
     # 启动
+    if is_port_in_use(args.server_port):
+        args.server_port += 1
     web.queue().launch(server_name=args.server_name,
                        server_port=args.server_port,
                        share=args.share,

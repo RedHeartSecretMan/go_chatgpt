@@ -1,0 +1,9 @@
+./.git
+./.vscode
+./assets
+./deploy
+./logging
+./go_chatgpt.egg-info
+./api_key.txt
+./.gitignore
+./demo.ipynb
