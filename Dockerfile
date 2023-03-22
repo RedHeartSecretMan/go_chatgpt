@@ -24,12 +24,12 @@ ENV server_name="0.0.0.0"
 ENV server_port=7860
 ENV proxy_name="192.168.1.7" 
 ENV proxy_port=7890 
+ENV stream=True
 ENV share=False
-ENV debug=False
 
 # 安装启动脚本
 RUN echo "#!/bin/bash" > ./start.sh && \
-    echo "python -m chatgpter -ak \${api_key} -m \${model} -mt \${model_trend} -rm \${request_method} -sn \${server_name} -sp \${server_port} -pn \${proxy_name} -pp \${proxy_port} -s \${share} -d \${debug}" >> ./start.sh && \
+    echo "python -m chatgpter -ak \${api_key} -m \${model} -mt \${model_trend} -rm \${request_method} -sn \${server_name} -sp \${server_port} -pn \${proxy_name} -pp \${proxy_port} -sm \${stream} -se \${share}" >> ./start.sh && \
     chmod +x ./start.sh
 
 # 设置启动命令

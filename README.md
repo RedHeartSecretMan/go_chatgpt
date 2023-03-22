@@ -42,13 +42,13 @@ pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git
 **你可以通过以下命令获取 *docker* 镜像**
 > ***You can obtain the docker image with the following command***
 ```shell
-docker pull 1046911101/go_chatgpt:0319 
+docker pull 1046911101/go_chatgpt:latest 
 ```
 
 **你需要为该镜像创建一个容器并启动，常用的参数都被设置未了环境变量，根据需要调整**
 > ***You need to create a container for the image and start it and the usual parameters are set to environment variables and adjusted as needed***
 ```shell
-docker run -e api_key="write_yourself_api_key_from_openai.com" -e request_method="official" --name go_chatgpt_0319 -p 7860:7860 -it 1046911101/go_chatgpt:0319
+docker run -e api_key="write_yourself_api_key_from_openai.com" -e request_method="official" --name go_chatgpt_0319 -p 7860:7860 -it 1046911101/go_chatgpt:latest
 ```
 > **Tips: 其中默认的请求方法为 *post* 而 *write_yourself_api_key_from_openai.com* 应该是一串类似 *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* 的代码**
 
