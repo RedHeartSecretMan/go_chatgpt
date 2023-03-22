@@ -13,8 +13,11 @@ bash "/tmp/$minicondaVersion" -b -p "$HOME/miniconda"
 # 更新 conda
 "$HOME/miniconda/bin/conda" update -y conda
 
+# 更新 pip
+"$HOME/miniconda/bin/python" -m pip install --upgrade pip
+
 # 安装包
 for package in "${packages[@]}"
 do
-    "$HOME/miniconda/bin/conda" install -y "$package"
+    "$HOME/miniconda/bin/python" -m pip install "$package"
 done

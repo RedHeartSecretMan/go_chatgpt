@@ -11,7 +11,10 @@ Invoke-WebRequest -Uri "https://repo.anaconda.com/miniconda/$minicondaVersion" -
 # 更新 conda
 conda update -y conda
 
+# 更新 pip
+python -m pip install --upgrade pip
+
 # 安装包
 foreach ($package in $packages) {
-    conda install -y $package
+    python -m pip install $package
 }
