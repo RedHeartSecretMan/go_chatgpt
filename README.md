@@ -32,7 +32,7 @@ conda create -n chatgpt python=3.8
 
 ```shell
 # 从PyPI安装
-pip install -U go_chatgpt
+pip install -U go_chatgpt -i https://pypi.org/simple 
 
 # 从GitHub安装
 pip install git+https://github.com/RedHeartSecretMan/go_chatgpt.git

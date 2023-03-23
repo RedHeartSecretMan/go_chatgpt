@@ -318,14 +318,15 @@ class CallChatGPT:
                     
                     yield string_io.getvalue()
                     for chunk in response:
-                        if chunk["choices"][0]["finish_reason"] != "stop":
-                            if chunk["choices"][0].get("delta"):
-                                if chunk["choices"][0]["delta"].get("content"):
-                                    string_io.write(chunk["choices"][0]["delta"]["content"])
+                        if chunk:
+                            if chunk["choices"][0]["finish_reason"] != "stop":
+                                if chunk["choices"][0].get("delta"):
+                                    if chunk["choices"][0]["delta"].get("content"):
+                                        string_io.write(chunk["choices"][0]["delta"]["content"])
 
-                                    yield string_io.getvalue()
-                        elif chunk["choices"][0]["finish_reason"] == "length":
-                           warnings.warn(f"回答可能不完整因为当前token数已经达到 {MAXTOKEN} ！")
+                                        yield string_io.getvalue()
+                            if chunk["choices"][0]["finish_reason"] == "length":
+                                warnings.warn(f"回答可能不完整因为当前token数已经达到 {MAXTOKEN} ！")
                     answer = string_io.getvalue()
                     self.check_logger()
                     self.logs.info(f"回答: {answer.strip()}\n\n")
@@ -366,22 +367,22 @@ class CallChatGPT:
                     
                     yield string_io.getvalue()
                     for chunk in response.iter_lines():
-                        chunk = chunk.decode()
-                        chunk = chunk[TAGLENGTH:]
-                        chunk_lenght = len(chunk)
-                        try:
-                            chunk = json.loads(chunk)
-                        except json.JSONDecodeError:
-                            continue
-                        if chunk_lenght > TAGLENGTH:
-                            if chunk["choices"][0]["finish_reason"] != "stop":
-                                if chunk["choices"][0].get("delta"):
-                                    if chunk["choices"][0]["delta"].get("content"): 
-                                        string_io.write(chunk["choices"][0]["delta"]["content"])
-                                        
-                                        yield string_io.getvalue()
-                            elif chunk["choices"][0]["finish_reason"] == "length":
-                                warnings.warn(f"回答可能不完整因为当前token数已经达到 {MAXTOKEN} ！")
+                        if chunk:
+                            chunk = chunk.decode()
+                            chunk_lenght = len(chunk)
+                            try:
+                                chunk = json.loads(chunk[TAGLENGTH:])
+                            except json.JSONDecodeError:
+                                continue
+                            if chunk_lenght > TAGLENGTH:
+                                if chunk["choices"][0]["finish_reason"] != "stop":
+                                    if chunk["choices"][0].get("delta"):
+                                        if chunk["choices"][0]["delta"].get("content"): 
+                                            string_io.write(chunk["choices"][0]["delta"]["content"])
+                                            
+                                            yield string_io.getvalue()
+                                if chunk["choices"][0]["finish_reason"] == "length":
+                                    warnings.warn(f"回答可能不完整因为当前token数已经达到 {MAXTOKEN} ！")
                     answer = string_io.getvalue()
                     self.check_logger()
                     self.logs.info(f"回答: {answer.strip()}\n\n")
