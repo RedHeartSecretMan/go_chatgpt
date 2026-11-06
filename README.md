@@ -4,7 +4,7 @@
 ## Quick start
 ***「go_chatgpt」* 是一个快速调用 openai chatgpt api 的网页封装**
 
-> ***「go_subtitle」 is a quick call to openai chatgpt api web page encapsulation***
+> ***「go_chatgpt」 is a quick call to openai chatgpt api web page encapsulation***
 
 <img src="./assets/chat.jpg" alt="chat" width="800;" />
 
