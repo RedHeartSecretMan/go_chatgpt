@@ -1,5 +1,10 @@
 # Go ChatGPT
 
+> **维护状态｜本项目已停止维护**（最后一个版本发布于 2023 年 3 月）。
+> 代码按原样提供，不再计划新增功能或修复问题；如需继续，欢迎 fork 后自行维护。
+
+> **Maintenance status｜No longer maintained** (last release: March 2023).
+> The code is provided as-is; no new features or fixes are planned. Feel free to fork it to continue.
 
 ## Quick start
 ***「go_chatgpt」* 是一个快速调用 openai chatgpt api 的网页封装**
@@ -75,4 +80,3 @@ docker run -e api_key="write_yourself_api_key_from_openai.com" -e proxy_name="19
 
 <div align="center"><img src="./assets/avatar.jpeg" width="100" height="100" /></div>
 <div align="center"><font face="楷体" size="3">作者 昊大侠</font></div>
-
